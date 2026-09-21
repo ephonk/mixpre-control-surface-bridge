@@ -1,0 +1,289 @@
+# MixPre Control Surface Bridge
+
+Drive a Sound Devices MixPre from an iCON Platform M+.
+
+A Raspberry Pi Pico sits between the two. On one USB port it pretends to be one
+of the controllers the MixPre accepts. On the other it speaks Mackie Control, and
+translates between the two protocols.
+
+Firmware version 1.0.0. What changed between versions is in `CHANGELOG.md`, and
+any build can be asked which version it is: send `F0 7D 61 F7` to the bridge.
+
+![The bridge in its case](render/case-closed.png)
+
+---
+
+## The problem
+
+A MixPre accepts a short list of controllers: the Akai MIDIMix, the Korg
+nanoKONTROL 2, the Korg nanoKONTROL Studio and the Novation LaunchControl XL.
+Anything else is ignored, no matter how standard the protocol is.
+
+So a surface that is not on that list is useless with a MixPre, and even the
+ones that are on it only reach part of what the recorder can do. This project
+fixes that with about 10 USD of parts.
+
+## What it does
+
+- 8 faders, which covers every channel of a MixPre-6, with full support for channels 5 and 6
+- 8 knobs, each switchable between Trim, LowCut and Pan
+- Mute, Solo, Rec arm and Select for every channel, with LEDs
+- Full transport: Play, Stop, Record, Rewind, Fast Forward, Cycle, Return to Zero
+- Jog wheel for shuttle and scrub
+- Slate, Tone and L/R mute
+- LEDs on the surface follow the recorder
+- Built and tested with the iCON Platform M+, on MixPre-6 and MixPre-10
+
+## What it does not do
+
+Three things, for three different reasons:
+
+- **Motorized faders cannot follow the recorder.** The MixPre reports button
+  states only. It never sends fader positions, so the motors can only hold the
+  position you set, not mirror the mix.
+- **The knobs stay relative.** Knob values are not reported either, so you match
+  a knob by turning it until it catches the value the recorder already has.
+- **Channels 9 and 10 of a MixPre-10 are out of reach.** The eight faders reach
+  channels 1 to 8. A MixPre-6 has six channels, so all of them are covered. A
+  MixPre-10 has ten, and the last two are not: a fader that lands on a channel it
+  does not already match would jump the level, and the MixPre does no catch-up on
+  its faders. The bridge could do that catch-up itself, and a later release may.
+
+Everything else depends on Sound Devices. Official support for controllers other
+than the one they whitelist, and value feedback for faders and knobs, are their
+call, not something a bridge can work around.
+
+## Hardware
+
+| Part | Notes |
+|---|---|
+| Raspberry Pi Pico 2 W (or Pico 2) | Pico 2 is enough. The W model has WiFi you will not use |
+| iCON Platform M+ | What this was built and tested with. Another Mackie Control surface should work in principle, but the button mapping here is written for the iCON |
+| 2 x 22 Ω resistor | Series termination on the two data lines |
+| 1 x 6.8 kΩ resistor | Status LED |
+| 1 x 3 mm LED | The case has a 3 mm hole for it, so the size matters. Lights steady when the surface is alive, blinks when it is not |
+| USB-A to USB-B cable | Cut the USB-A end off, the wires go to the Pico |
+| Hookup wire, around 0.25 mm² / 23 AWG, 1.5 mm outside diameter | Two pieces for the LED, about 10 cm each. Twisted or left straight, both work |
+| 3D printed case | STL files in `enclosure/` |
+| 4 x M2 x 3 mm screw, 3.5 mm head | Holds the Pico in the case |
+| 2 x M2 x 10 mm screw | Cable clamp |
+| 2 x M3 x 12 mm screw | Lid |
+
+The Pico has one USB controller, so the native USB port is the MixPre side and
+the host side runs over PIO USB on two GPIO pins.
+
+### Wiring
+
+| Pico 2 W | part | cable wire |
+|---|---|---|
+| GP0 (pin 1) | 22 Ω in series, close to the pin | D+ (green) |
+| GP1 (pin 2) | 22 Ω in series, close to the pin | D− (white) |
+| GND (pin 38) | | GND (black) |
+| VBUS (pin 40) | | VBUS (red) |
+| GP2 (pin 4) | 6.8 kΩ to the LED anode | status LED |
+| GND (pin 3) | | LED cathode |
+
+Pins 3 and 38 are both ground on the Pico. The LED takes pin 3 because the LED
+sits on that side of the board, and the cable's ground takes pin 38, which is
+next to VBUS where the red wire lands anyway.
+
+![Wiring diagram](docs/wiring.svg)
+
+Pin numbers in the table and in the drawing are the ones printed on the board. The
+drawing below shows where they sit and which side of the board each wire lands on.
+
+![Pinout of the Pico 2 and Pico 2 W](docs/pico2w-pinout.svg)
+
+The official pinout from Raspberry Pi is worth having open while you solder:
+<https://pip-assets.raspberrypi.com/categories/1088-raspberry-pi-pico-2-w/documents/RP-008305-DS-1-pico-2-w-pinout.pdf>
+
+Keep D+ and D− as a twisted pair, untwisted only over the last 2 to 3 cm at the
+resistors. The two wires to the LED can be twisted or left straight, it makes no
+difference. Keep them away from the data pair.
+
+**Leave the cable shield disconnected.** The iCON does not tie the USB shell to
+its signal ground or to its DC input, so there is no ground loop to worry about,
+and at Full Speed the twisted pair does the work. Connect the shield to Pico
+ground on one end only if you actually hit interference.
+
+## Assembly
+
+Work through it in this order.
+
+1. Cut the USB-A plug off the cable, strip the outer jacket back far enough to
+   work with, and find the four wires inside: green, white, black and red. The
+   bare shield around them stays unconnected, so trim it back where it cannot
+   touch anything.
+
+2. Strip and tin the four wires. Green is D+, white is D−, black is ground, red
+   is VBUS.
+
+3. Solder one 22 Ω resistor to pin 1 (GP0) and the other to pin 2 (GP1). Keep
+   both right at the pins.
+
+4. Solder the green wire to the free end of the pin 1 resistor, and the white
+   wire to the free end of the pin 2 resistor. Keep the pair twisted as far as
+   the resistors and untwist only the last 2 to 3 cm.
+
+5. Solder the black wire to pin 38 (GND) and the red wire to pin 40 (VBUS).
+
+6. Solder the 6.8 kΩ resistor between pin 4 (GP2) and the anode of the LED, and
+   the cathode of the LED to pin 3 (GND). Pin 3 sits on the same side as the LED,
+   which keeps the wire short. Keep these two wires away from the data pair.
+
+7. Slide the Pico into the bottom half of the case and bring the cable out
+   through the clamp. Fix the Pico with the four M2 x 3 mm screws and the clamp
+   with the two M2 x 10 mm screws, so that a pull on the cable cannot reach the
+   solder joints.
+
+8. Close the lid with the two M3 x 12 mm screws.
+
+9. Flash the firmware, see Build below.
+
+10. Power it up with nothing connected on the surface side. The LED blinks until
+    the surface answers, and then it stays on.
+
+![Inside the case](render/case-open-top.png)
+
+The wiring in that picture is illustrative. Solder by the table and the diagram
+above, not by the colours you see there.
+
+## Build
+
+You do not have to build anything. A ready `prebuilt/mixpre_bridge_1.0.0.uf2` is
+in this repository: hold BOOTSEL on the Pico, plug it in, and copy that file onto
+the RP2350 drive.
+
+To build it from source instead:
+
+```bash
+cd pico-bridge/firmware
+export PICO_SDK_PATH=$PWD/../pico-sdk
+export PICO_TOOLCHAIN_PATH=/path/to/arm-gnu-toolchain
+export PICO_BOARD=pico2_w
+cmake -B build -G "Unix Makefiles"
+cmake --build build
+```
+
+Output: `build/mixpre_bridge_<version>.uf2`, where the version comes from
+`pico-bridge/firmware/version.h`. Hold BOOTSEL on the Pico, plug it in, and copy
+the file onto the RP2350 drive. The copy kept in `prebuilt/` carries the same
+name.
+
+Vendored dependencies are not in the repository. Clone `pico-sdk` and
+`Pico-PIO-USB` into `pico-bridge/` before building.
+
+### Controller mode
+
+The iCON has to be in Mackie Control mode. Set it with the iCON software, or with
+the mode combination at start-up. The iCON manual covers both.
+
+### MixPre shortcuts you have to set in its menu
+
+The MixPre exposes Tone, L/R mute, Slate and Shuttle only as user assignable
+shortcuts. Assign them like this, otherwise those buttons do nothing:
+
+| Shortcut | Assign | Driven by |
+|---|---|---|
+| Marker Set | Tone | Read button |
+| Marker Left | Slate | Write button |
+| Marker Right | L/R Mute | Mute button |
+| Fast Fwd | Shuttle | jog wheel push |
+
+Read, Write and Mute are sent as `Cycle + button` combinations. Read and Mute
+only work while Cycle is engaged, which is a safety measure: it keeps an
+accidental press from muting an ISO track mid take. Slate is momentary and works
+regardless.
+
+## Repository layout
+
+```
+pico-bridge/firmware/     firmware sources
+pico-bridge/docs/         protocol notes
+pico-bridge/README.md     detailed engineering notes
+enclosure/                case parts, STL
+render/                   case renders
+docs/                     wiring diagram
+prebuilt/                 ready to flash mixpre_bridge.uf2
+```
+
+## How it works
+
+Two things had to be reproduced, and both were reverse engineered on the wire:
+
+1. **The Korg handshake and USB identity.** The MixPre refuses unrecognised
+   devices, so the Pico presents the Korg's descriptors byte for byte, answers
+   its SysEx handshake and serves the scene and global data the MixPre writes
+   back to it.
+2. **The translation.** The surface speaks Mackie Control, the MixPre expects CC
+   messages from its own scene. Faders, knobs, buttons and the jog wheel are
+   mapped in both directions.
+
+Details are in `pico-bridge/README.md` and `pico-bridge/docs/`.
+
+## Debug commands
+
+Send these as SysEx to the bridge over MIDI.
+
+| Command | Effect |
+|---|---|
+| `F0 7D 61 F7` | firmware version as plain text |
+| `F0 7D 67 F7` | status: mount state, VID/PID, counters |
+| `F0 7D 65 F7` | registers from the last hard fault |
+| `F0 7D 64 vv F7` | force the status LED to level vv, `FF` returns to automatic |
+| `F0 7D 7C F7` | return the debug log |
+| `F0 7D 7A F7` | reboot |
+| `F0 7D 7E F7` | reboot into BOOTSEL |
+
+## Troubleshooting
+
+**The LED blinks and nothing works.** The bridge is not hearing from the
+surface. Check that the surface is powered and that its USB cable is seated.
+
+**Buttons do nothing, but the faders work.** The MixPre shortcuts were never
+assigned. See the shortcut table above.
+
+**The MixPre does not pick up the surface at all.** The surface has to be in
+Mackie mode. See Controller mode above.
+
+**Levels drop to silence the moment the surface connects.** This is the MixPre
+protecting your ears, not a fault in the bridge. Whenever the controller mode
+changes, the MixPre sets the channel faders to minimum, so a controller left at
+full cannot blast the mix. Set the faders where you want the levels before you
+connect.
+
+**A fader moves and the level jumps straight away, with no catch-up.** That is
+how the MixPre treats the faders of a nanoKONTROL Studio. The knobs catch up,
+the faders do not. Sound Devices confirmed that this is set in the firmware for
+each controller, so the bridge cannot change it.
+
+**The front panel and the touchscreen will not move a fader or a trim.** That is
+the MixPre, not the bridge. While an external controller is connected, the MixPre
+locks its own controls for trim, lowcut, pan and the faders. Change those on the
+surface, or disconnect it.
+
+If none of that helps, the debug commands above will tell you whether the bridge
+sees the surface at all.
+
+## Credits
+
+- TinyUSB, MIT
+- Pico-PIO-USB by sekigon-gonnoc, MIT
+- Raspberry Pi Pico SDK, BSD-3-Clause
+
+## Author
+
+Tomasz Soyer, [github.com/ephonk](https://github.com/ephonk). Production sound
+mixer, building open source tools for the sound community.
+
+## Not affiliated
+
+Not affiliated with, endorsed by or supported by Sound Devices or Korg.
+Product names are used only to describe what the hardware interoperates with.
+
+The case is designed around the Raspberry Pi Pico 2. Grab its 3D model from the
+Raspberry Pi product page if you want to modify the design.
+
+## License
+
+MIT, see `LICENSE`.

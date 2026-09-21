@@ -1,0 +1,33 @@
+# build artifacts
+pico-bridge/firmware/build/
+
+# vendored SDKs (clone separately, see README)
+pico-bridge/pico-sdk/
+pico-bridge/Pico-PIO-USB/
+
+# firmware image (large, licensed)
+*.zip
+*.prg
+extracted/
+
+# misc
+.DS_Store
+
+# third-party reference material (kept locally, not redistributable)
+Korg_NanoKontrol_Studio_Interface_Functions.md
+Platform-M-PD3V103-English.pdf
+nanoKONTROL_Studio_MIDIimp.txt
+icon_mapping.imap
+
+# slicer project files (personal settings)
+*.3mf
+
+# LED holder model (not needed for building the case)
+pico_3d/3mmLED v2.step
+
+# Polish technical archive (not published)
+*.pl.md
+
+# Raspberry Pi Pico 3D model (download from raspberrypi.com, not redistributed)
+pico_3d/
+enclosure/*.step

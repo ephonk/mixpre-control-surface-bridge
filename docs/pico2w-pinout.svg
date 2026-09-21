@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" width="1000" height="520">
+  <rect width="1000" height="520" fill="#ffffff"/>
+  <style>
+    text{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+    .b{font-size:15px;font-weight:600;fill:#111}
+    .s{font-size:11px;fill:#555}
+    .p{font-size:10.5px;fill:#111}
+    .u{font-size:10.5px;font-weight:700;fill:#111}
+    .box{fill:#f4f4f4;stroke:#111;stroke-width:1.5}
+    .pin{stroke:#111;stroke-width:3}
+  </style>
+
+  <text class="b" x="24" y="28">Pinout of the Pico 2 and Pico 2 W</text>
+  <text class="s" x="24" y="46">Viewed from the top, USB socket at the top. The six pins this build uses are in bold.</text>
+
+  <rect class="box" x="420" y="70" width="160" height="400" rx="6"/>
+  <rect class="box" x="472" y="52" width="56" height="18" rx="2"/>
+  <text class="s" x="500" y="65" text-anchor="middle">USB</text>
+
+  <text class="u" x="414" y="88" text-anchor="end">1   GP0</text>
+  <text class="u" x="414" y="108" text-anchor="end">2   GP1</text>
+  <text class="u" x="414" y="128" text-anchor="end">3   GND</text>
+  <text class="u" x="414" y="148" text-anchor="end">4   GP2</text>
+  <text class="p" x="414" y="168" text-anchor="end">5   GP3</text>
+  <text class="p" x="414" y="188" text-anchor="end">6   GP4</text>
+  <text class="p" x="414" y="208" text-anchor="end">7   GP5</text>
+  <text class="p" x="414" y="228" text-anchor="end">8   GND</text>
+  <text class="p" x="414" y="248" text-anchor="end">9   GP6</text>
+  <text class="p" x="414" y="268" text-anchor="end">10  GP7</text>
+  <text class="p" x="414" y="288" text-anchor="end">11  GP8</text>
+  <text class="p" x="414" y="308" text-anchor="end">12  GP9</text>
+  <text class="p" x="414" y="328" text-anchor="end">13  GND</text>
+  <text class="p" x="414" y="348" text-anchor="end">14  GP10</text>
+  <text class="p" x="414" y="368" text-anchor="end">15  GP11</text>
+  <text class="p" x="414" y="388" text-anchor="end">16  GP12</text>
+  <text class="p" x="414" y="408" text-anchor="end">17  GP13</text>
+  <text class="p" x="414" y="428" text-anchor="end">18  GND</text>
+  <text class="p" x="414" y="448" text-anchor="end">19  GP14</text>
+  <text class="p" x="414" y="468" text-anchor="end">20  GP15</text>
+
+  <text class="u" x="586" y="88">40  VBUS</text>
+  <text class="p" x="586" y="108">39  VSYS</text>
+  <text class="u" x="586" y="128">38  GND</text>
+  <text class="p" x="586" y="148">37  3V3_EN</text>
+  <text class="p" x="586" y="168">36  3V3(OUT)</text>
+  <text class="p" x="586" y="188">35  ADC_VREF</text>
+  <text class="p" x="586" y="208">34  GP28</text>
+  <text class="p" x="586" y="228">33  AGND</text>
+  <text class="p" x="586" y="248">32  GP27</text>
+  <text class="p" x="586" y="268">31  GP26</text>
+  <text class="p" x="586" y="288">30  RUN</text>
+  <text class="p" x="586" y="308">29  GP22</text>
+  <text class="p" x="586" y="328">28  GND</text>
+  <text class="p" x="586" y="348">27  GP21</text>
+  <text class="p" x="586" y="368">26  GP20</text>
+  <text class="p" x="586" y="388">25  GP19</text>
+  <text class="p" x="586" y="408">24  GP18</text>
+  <text class="p" x="586" y="428">23  GND</text>
+  <text class="p" x="586" y="448">22  GP17</text>
+  <text class="p" x="586" y="468">21  GP16</text>
+
+  <line class="pin" x1="420" y1="84" x2="432" y2="84"/>
+  <line class="pin" x1="420" y1="104" x2="432" y2="104"/>
+  <line class="pin" x1="420" y1="124" x2="432" y2="124"/>
+  <line class="pin" x1="420" y1="144" x2="432" y2="144"/>
+  <line class="pin" x1="568" y1="84" x2="580" y2="84"/>
+  <line class="pin" x1="568" y1="124" x2="580" y2="124"/>
+
+  <text class="s" x="500" y="500" text-anchor="middle">This build uses pins 1, 2, 3, 4, 38 and 40. Everything else is spare.</text>
+</svg>
