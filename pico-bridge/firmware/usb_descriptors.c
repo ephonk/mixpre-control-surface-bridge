@@ -1,18 +1,18 @@
 /*
- * USB device descriptors — spoof Korg nanoKONTROL Studio.
+ * USB device descriptors: spoof a Korg nanoKONTROL Studio.
  *
- * !!! USTAWIĆ WG system_profiler SPUSBDataType (sekcja Korg) !!!
- * MixPre może weryfikować VID/PID, stringi lub nazwy jacków MIDI.
- * Klonujemy wszystko 1:1.
+ * Taken from system_profiler SPUSBDataType, Korg section, and from ioreg.
+ * The MixPre may check the VID/PID, the strings or the MIDI jack names, so
+ * everything here is cloned one to one.
  */
 
 #include "tusb.h"
 
 //--------------------------------------------------------------------+
-// KORG nanoKONTROL Studio — dane potwierdzone z system_profiler/ioreg
+// KORG nanoKONTROL Studio: values confirmed with system_profiler and ioreg
 //--------------------------------------------------------------------+
 #define KORG_VID             0x0944   // Korg Inc.
-#define KORG_NANOKONTROL_PID 0x0134   // nanoKONTROL Studio (potwierdzone)
+#define KORG_NANOKONTROL_PID 0x0134   // nanoKONTROL Studio (confirmed)
 #define KORG_BCD_DEVICE      0x0100   // Version 1.00
 #define KORG_BCD_USB         0x0110   // USB 1.1
 
