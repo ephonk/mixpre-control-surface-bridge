@@ -39,6 +39,12 @@
 //--------------------------------------------------------------------+
 static queue_t q_icon_to_mixpre;
 static queue_t q_mixpre_to_icon;
+// Fader echoes have their own queue and are sent before everything else. Sharing
+// the queue above meant an echo could stand behind 255 LED packets, because the
+// MixPre fills it with button states - the motor then followed the hand late.
+// Small on purpose: a stale fader position is worthless, so when it is full the
+// oldest value is dropped and the newest one wins.
+static queue_t q_fader_echo;
 
 #define MIDI_QUEUE_DEPTH 256
 
@@ -412,6 +418,78 @@ static void icon_note(uint8_t note, uint8_t vel) {
 }
 
 //--------------------------------------------------------------------+
+// Local fader pairing. The MixPre knows nothing about this: it is a bridge
+// side convenience, so nothing here is ever written into a scene.
+//
+// Mixer (note 84) only does something while the MixPre reports Cycle as on, so
+// with Cycle off the button is free. Hold it, click knob 1-4 to pick one of four
+// groups, click Select on the channels that belong to it, then release. Those
+// faders then move together: the bridge sends the same value to every channel in
+// the group and echoes it back so the other motors follow. While the Mixer is
+// held the knob buttons do not change the scene, which is the whole point of
+// grabbing the button first.
+//
+// Kept in RAM only. A power cycle clears the groups.
+//--------------------------------------------------------------------+
+#define PAIR_GROUPS 4
+static uint8_t g_pair_group[8];     // 0 = not paired, otherwise 1-4
+static uint8_t g_pair_target;       // group being assigned, 0 = none picked yet
+static bool    g_pair_edit;         // Mixer held while Cycle is off
+static uint8_t g_sel_led[8];        // last Select LED state we sent
+
+// Packets queued by the translator for the other faders in the group. Drained
+// by the send loop right after the packet the operator actually produced.
+static uint8_t fan_pkt[7][4];
+static uint8_t fan_msb[7], fan_lsb[7], fan_ch[7];
+static uint8_t fan_n;
+
+static bool pair_in_group(uint8_t idx) { return g_pair_group[idx] != 0; }
+
+// One rule for every Select LED: lit when the channel is the local selection OR
+// belongs to a pair. Writing both lamps from one place means taking a channel
+// out of a pair cannot switch off a lamp the selection still needs. Only the
+// channels whose state actually changed are sent.
+static void sel_leds(void) {
+  for (uint8_t i = 0; i < 8; i++) {
+    uint8_t want;
+    if (g_pair_edit) {
+      // While assigning, the lamps show the group being assembled and nothing
+      // else, so what has been marked so far is never in doubt.
+      want = (g_pair_target != 0 && g_pair_group[i] == g_pair_target) ? 0x7F : 0x00;
+    } else {
+      want = ((g_sel == (int8_t) i) || pair_in_group(i)) ? 0x7F : 0x00;
+    }
+    if (want == g_sel_led[i]) continue;
+    g_sel_led[i] = want;
+    icon_note((uint8_t) (24 + i), want);
+    icon_note((uint8_t) (104 + i), want);
+  }
+}
+
+// One Select click while the Mixer is held marks the channel in the group the
+// knob buttons picked. Clicking a member again takes it out.
+static void pair_select(uint8_t idx) {
+  if (g_pair_target == 0) return;               // no group picked yet
+  g_pair_group[idx] = (g_pair_group[idx] == g_pair_target) ? 0 : g_pair_target;
+  sel_leds();
+}
+
+// A group of one is not a pair. Applied when the Mixer is released, so a half
+// finished gesture leaves nothing behind.
+static void pair_commit(void) {
+  for (uint8_t g = 1; g <= PAIR_GROUPS; g++) {
+    uint8_t n = 0;
+    for (uint8_t i = 0; i < 8; i++) if (g_pair_group[i] == g) n++;
+    if (n < 2) {
+      for (uint8_t i = 0; i < 8; i++) if (g_pair_group[i] == g) g_pair_group[i] = 0;
+    }
+  }
+  g_pair_target = 0;
+  g_pair_edit = false;
+  sel_leds();
+}
+
+//--------------------------------------------------------------------+
 // Translation Icon (Mackie Control) -> MixPre (Korg scene CCs)
 //--------------------------------------------------------------------+
 static bool translate_icon_to_mixpre(uint8_t pkt[4]) {
@@ -423,6 +501,16 @@ static bool translate_icon_to_mixpre(uint8_t pkt[4]) {
     // function. It is selected by the knob's MIDI channel: 0=Trim 1=LowCut 2=Pan
     if (d1 >= 32 && d1 <= 39) {
       if (cin == 0x9 && d2 > 0) {
+        // While the Mixer is held these buttons pick one of the four pair groups
+        // instead, and the scene must not move: 1-4 choose a group, 5-8 do
+        // nothing at all. Nobody reaches for Mixer by accident mid take.
+        if (g_pair_edit) {
+          if (d1 <= 31 + PAIR_GROUPS) {
+            g_pair_target = (uint8_t) (d1 - 31);
+            sel_leds();
+          }
+          return false;
+        }
         g_knob_ch = (uint8_t) ((g_knob_ch >= 2) ? 0 : (g_knob_ch + 1));
         g_scene = g_knob_ch;
         knob_mode_indicator();
@@ -471,6 +559,19 @@ static bool translate_icon_to_mixpre(uint8_t pkt[4]) {
       bool press   = (cin == 0x9 && d2 > 0);
       bool release = (cin == 0x8) || (cin == 0x9 && d2 == 0);
 
+      // Mixer (84) doubles as the pairing button, but only while Cycle is off:
+      // with Cycle on it belongs to the MixPre's L/R mute shortcut and must not
+      // be touched. See the pairing block above.
+      if (d1 == 84) {
+        if (press && !g_cycle_on) {
+          g_pair_edit = true;
+          g_pair_target = 0;
+          sel_leds();                     // blank the lamps: assigning now
+        } else if (release && g_pair_edit) {
+          pair_commit();
+        }
+      }
+
       // SAFETY: Tone / L-R mute are MixPre shortcuts that only exist while the
       // Cycle (shortcut mode) is ON. Ignore the buttons otherwise, exactly like
       // on the real nanoKONTROL.
@@ -509,21 +610,26 @@ static bool translate_icon_to_mixpre(uint8_t pkt[4]) {
     }
 
     uint16_t base;
-    // Select row (notes 24-31): the MixPre never reports the Select state, so
-    // keep the SEL LED (and the channel LED) locally, radio style.
-    if (d1 >= 24 && d1 <= 31 && cin == 0x9 && d2 > 0) {
-      uint8_t idx = (uint8_t) (d1 - 24);
-      if (g_sel >= 0) {                       // turn the previous one off
-        icon_note((uint8_t) (24 + g_sel), 0x00);
-        icon_note((uint8_t) (104 + g_sel), 0x00);
+    // Select row (notes 24-31). Normally it goes to the MixPre as the channel
+    // select - that is what puts the channel's details on its screen - while the
+    // LED is kept locally, because the MixPre never reports Select back.
+    //
+    // While a pair group is being assigned the click belongs to the bridge only:
+    // it marks the channel and nothing is sent. Otherwise the MixPre screen would
+    // jump to another channel on every click. The release edge is swallowed as
+    // well, because it would clear the selection the operator is looking at.
+    if (d1 >= 24 && d1 <= 31) {
+      if (g_pair_edit) {
+        if (cin == 0x9 && d2 > 0) pair_select((uint8_t) (d1 - 24));
+        return false;
       }
-      if (g_sel == (int8_t) idx) {
-        g_sel = -1;                           // toggle off
-      } else {
-        g_sel = (int8_t) idx;                 // select this channel
-        icon_note(d1, 0x7F);
-        icon_note((uint8_t) (104 + idx), 0x7F);
+      if (cin == 0x9 && d2 > 0) {
+        uint8_t idx = (uint8_t) (d1 - 24);
+        if (g_sel == (int8_t) idx) g_sel = -1;   // toggle off
+        else                       g_sel = (int8_t) idx;
+        sel_leds();
       }
+      // Press and release fall through untouched: the MixPre gets its select.
     }
     if (d1 <= 0x07)               base = (uint16_t) (SC_OFF_REC + d1 * 8);            // Rec 1-8
     else if (d1 <= 0x0F)          base = (uint16_t) (SC_OFF_SOLO + (d1 - 0x08) * 8);  // Solo 1-8
@@ -615,6 +721,27 @@ static bool translate_icon_to_mixpre(uint8_t pkt[4]) {
       if (g_fader_last_ok[ch] && g_fader_last[ch] == val) return false;
       g_fader_last[ch] = val;
       g_fader_last_ok[ch] = true;
+
+      // A paired fader moves the whole group: the same value on every member's
+      // own channel, plus the echo that makes its motor follow. Each member's
+      // "last value" is updated too, so the copy is never sent twice.
+      fan_n = 0;
+      if (g_pair_group[ch] != 0) {
+        for (uint8_t m = 0; m < 8; m++) {
+          if (m == ch || g_pair_group[m] != g_pair_group[ch]) continue;
+          uint16_t b2 = (uint16_t) (SC_OFF_SLIDER + m * 8);
+          fan_pkt[fan_n][0] = 0x0B;
+          fan_pkt[fan_n][1] = scene_status(b2);
+          fan_pkt[fan_n][2] = scene_cc(b2);
+          fan_pkt[fan_n][3] = val;
+          fan_ch[fan_n]  = m;
+          fan_msb[fan_n] = d1;
+          fan_lsb[fan_n] = d2;
+          g_fader_last[m] = val;
+          g_fader_last_ok[m] = true;
+          fan_n++;
+        }
+      }
 
       pkt[0] = 0x0B; pkt[1] = st; pkt[2] = cc;
       pkt[3] = val;
@@ -913,8 +1040,16 @@ void core1_main(void) {
         if (!queue_try_add(&q_icon_to_mixpre, &p)) d_drop_to_mix++;
       }
 
-      // MixPre -> Icon
+      // Fader echoes first. The operator is watching the motors, and the LED
+      // traffic behind them is not urgent - but it is long.
       uint32_t p;
+      while (queue_try_remove(&q_fader_echo, &p)) {
+        midi_unpack(p, pkt);
+        g_bb1 = 0x1004;                  // core1: writing to the Icon
+        tuh_midi_packet_write(dev, pkt);
+      }
+
+      // MixPre -> Icon
       while (queue_try_remove(&q_mixpre_to_icon, &p)) {
         midi_unpack(p, pkt);
         g_bb1 = 0x1004;                  // core1: writing to the Icon
@@ -1036,6 +1171,7 @@ int main(void) {
 
   queue_init(&q_icon_to_mixpre, sizeof(uint32_t), MIDI_QUEUE_DEPTH);
   queue_init(&q_mixpre_to_icon, sizeof(uint32_t), MIDI_QUEUE_DEPTH);
+  queue_init(&q_fader_echo, sizeof(uint32_t), 32);
 
   multicore_reset_core1();
   multicore_launch_core1(core1_main);
@@ -1237,9 +1373,28 @@ int main(void) {
 #if FADER_ECHO
         if (is_fader) {
           uint32_t echo = p;
-          queue_try_add(&q_mixpre_to_icon, &echo);
+          if (!queue_try_add(&q_fader_echo, &echo)) {
+            uint32_t dump;
+            queue_try_remove(&q_fader_echo, &dump);
+            queue_try_add(&q_fader_echo, &echo);
+          }
         }
 #endif
+
+        // The rest of the group, queued by the translator: same value to each
+        // member's channel, and the matching echo so its motor follows. The
+        // echo is what stops a paired fader from drifting away from its twin.
+        for (uint8_t f = 0; f < fan_n; f++) {
+          if (!tud_midi_packet_write(fan_pkt[f])) mtx_push(midi_pack(fan_pkt[f]));
+          uint8_t ep[4] = {0x0E, (uint8_t) (0xE0 | fan_ch[f]), fan_msb[f], fan_lsb[f]};
+          uint32_t eq = midi_pack(ep);
+          if (!queue_try_add(&q_fader_echo, &eq)) {
+            uint32_t dump;
+            queue_try_remove(&q_fader_echo, &dump);
+            queue_try_add(&q_fader_echo, &eq);
+          }
+        }
+        fan_n = 0;
 
         mtx_flush();                       // push out the backlog first
         d_tx_mix++;

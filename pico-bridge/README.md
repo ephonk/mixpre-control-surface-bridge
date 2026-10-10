@@ -152,8 +152,8 @@ Mode change: set it with the iCON software or at start-up, see the iCON manual.
 | Notes 75 and 76 | Marker Set, Next Marker |
 | CC 60 | jog wheel, same Sign Magnitude value |
 | Notes 32 to 39, 48, 49 | switch the knob function, not forwarded |
-| Notes 46 and 47 | deliberately unhandled, reserved for a channel bank jump |
-| Notes 74 / 75 / 84 | Read / Write / Mute, see the shortcuts below |
+| Notes 46 and 47 | deliberately unhandled, reserved for a channel bank jump (measured: Bank `<` and Bank `>`) |
+| Notes 74 / 75 / 84 | Read / Write / Mixer, see the shortcuts below |
 
 ### MixPre to surface
 
@@ -171,17 +171,21 @@ shortcuts. Assign them in its menu:
 
 | MixPre shortcut | Assign | Driven by |
 |---|---|---|
-| Marker Set | Tone | Read |
-| Marker Left | Slate | Write |
-| Marker Right | L/R Mute | Mute |
+| Marker Set | Tone | Read, note 74 |
+| Marker Left | Slate | Write, note 75 |
+| Marker Right | L/R Mute | Mixer, note 84 |
 | Fast Fwd | Shuttle | jog push |
+
+Note 84 is the button the iCON panel labels Mixer; Mackie Control calls it Mute.
+All four numbers here were measured with a MIDI monitor on a Platform M+
+(firmware V2.19).
 
 The mechanism, established by measurement:
 
 - **Cycle acts as a toggle that enables the shortcut mode.** The MixPre toggles
   it on the `Cycle 127` edge; the release does not toggle.
 - While the mode is on, a single click of the assigned button runs the function.
-- **Read and Mute only work while Cycle is on.** That is deliberate: the Mute
+- **Read and Mixer (note 84) only work while Cycle is on.** That is deliberate: the Mute
   button sits next to the faders, and an accidental mute during a take would
   kill an ISO track. Unmuting always works, so a muted channel can always be
   rescued. The local LED follows the MixPre's reported state.
@@ -193,6 +197,36 @@ The mechanism, established by measurement:
 - After a wrapped sequence the firmware checks the reported mode state and
   closes it if a sequence was interrupted, for example by rapid presses
   overflowing the request queue.
+
+### Fader pairing (bridge only)
+
+Four groups, tied in the bridge and never written into a scene. Mixer (84) is free
+while Cycle is off, so it doubles as the modifier:
+
+| Step | Effect |
+|---|---|
+| Mixer pressed, Cycle off | `g_pair_edit` set, Select LEDs blanked |
+| knob 1 to 4 while held | pick group 1 to 4 into `g_pair_target` |
+| Select click | toggle that channel in the target group |
+| Mixer released | drop any group left with fewer than two channels |
+
+While `g_pair_edit` is set, Select is consumed locally: the note never reaches
+`SC_OFF_SELECT`, because the MixPre screen would otherwise jump on every click and
+the release edge would clear the selection again. The knob branch returns before
+the scene change for the same reason.
+
+A fader move puts the same value on every member's channel and queues the
+matching echo for each motor, so the group travels as one block. The members'
+`g_fader_last` is updated too, so a copy is never sent twice.
+
+Echoes have their own queue, drained before the LED traffic. Sharing the main
+queue put an echo behind as many as 255 button-state packets, and the motors then
+followed the hand late. When it fills, the oldest value goes: a motor only cares
+where the fader is now.
+
+Groups live in RAM, not in flash, and the recorder is told nothing. The bridge has
+no knowledge of the channel linking in the MixPre menu, so the two must never be
+applied to the same pair.
 
 ### Jog and shuttle
 

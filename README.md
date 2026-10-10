@@ -6,7 +6,7 @@ A Raspberry Pi Pico sits between the two. On one USB port it pretends to be one
 of the controllers the MixPre accepts. On the other it speaks Mackie Control, and
 translates between the two protocols.
 
-Firmware version 1.0.0. What changed between versions is in `CHANGELOG.md`, and
+Firmware version 1.2.2. What changed between versions is in `CHANGELOG.md`, and
 any build can be asked which version it is: send `F0 7D 61 F7` to the bridge.
 
 ![The bridge in its case](render/case-closed.png)
@@ -31,8 +31,9 @@ fixes that with about 10 USD of parts.
 - Full transport: Play, Stop, Record, Rewind, Fast Forward, Cycle, Return to Zero
 - Jog wheel for shuttle and scrub
 - Slate, Tone and L/R mute
+- Fader pairing: up to four groups, so two or more faders move as one
 - LEDs on the surface follow the recorder
-- Built and tested with the iCON Platform M+, on MixPre-6 and MixPre-10
+- Built and tested with the iCON Platform M+ on MixPre-6 and MixPre-10, and run for a full 12 hour day on a shoot without a fault
 
 ## What it does not do
 
@@ -150,7 +151,7 @@ above, not by the colours you see there.
 
 ## Build
 
-You do not have to build anything. A ready `prebuilt/mixpre_bridge_1.0.0.uf2` is
+You do not have to build anything. A ready `prebuilt/mixpre_bridge_1.2.2.uf2` is
 in this repository: hold BOOTSEL on the Pico, plug it in, and copy that file onto
 the RP2350 drive.
 
@@ -185,15 +186,123 @@ shortcuts. Assign them like this, otherwise those buttons do nothing:
 
 | Shortcut | Assign | Driven by |
 |---|---|---|
-| Marker Set | Tone | Read button |
-| Marker Left | Slate | Write button |
-| Marker Right | L/R Mute | Mute button |
+| Marker Set | Tone | Read, note 74 |
+| Marker Left | Slate | Write, note 75 |
+| Marker Right | L/R Mute | Mixer, note 84 |
 | Fast Fwd | Shuttle | jog wheel push |
 
-Read, Write and Mute are sent as `Cycle + button` combinations. Read and Mute
+Read, Write and Mixer are sent as `Cycle + button` combinations. Read and Mixer
 only work while Cycle is engaged, which is a safety measure: it keeps an
 accidental press from muting an ISO track mid take. Slate is momentary and works
 regardless.
+
+The note numbers are what the controller sends, measured with a MIDI monitor.
+Mackie Control calls the third button Mute. The iCON panel labels it Mixer.
+
+### What the buttons do
+
+| Control | What it does |
+|---|---|
+| Faders 1 to 8 | channel fader |
+| Knobs 1 to 8 | Trim, LowCut or Pan, see below |
+| Knob push 1 to 8 | change the knob function |
+| Channel `<` and `>` | step the knob function back and forward |
+| Rec, Solo, Mute, Select 1 to 8 | the matching buttons on the recorder |
+| Rewind, Fast Forward, Stop, Play, Record, Cycle | the same transport buttons |
+| Marker Set, Next Marker | markers |
+| Jog wheel | jog. Pressing the wheel runs the Shuttle shortcut |
+| Read | Tone |
+| Write | Slate, momentary |
+| Mixer | L/R mute |
+| Bank `<` and `>` | nothing yet, and they have no LED the host can light |
+
+### What the surface cannot do
+
+A few things on the Platform M+ are out of reach, and they are worth knowing
+before you go looking for them:
+
+- **The master fader is not used.** It arrives as Pitch Bend channel 9 and the
+  bridge ignores it. The controller scene on the recorder has no master channel.
+- **The Bank `<` and `>` buttons have no LED that MIDI can light.** They flash
+  locally when pressed, and that is all the hardware does with them.
+- **The Zoom buttons send nothing at all** and have no addressable LED either,
+  so nothing can be mapped to them.
+- **The LED colours are fixed per row.** The lamps are RGB, but the colour
+  follows the row rather than the message: neither velocity nor MIDI channel
+  changes it, so a row cannot be recoloured from the bridge.
+
+The rows a host can light are the channel rows (Rec, Solo, Mute, Select), the
+transport, and the master Read, Write and Mixer buttons. Write is the one lamp
+left free in that set, which is why the knob function indicator sits on it.
+
+### The knob function
+
+The knobs carry one of three functions at a time. On the MixPre that is a scene:
+Trim, LowCut or Pan. There is one free lamp in the master row, the Write LED, so
+it shows which one is active:
+
+| Knob function | Write LED |
+|---|---|
+| Trim | off |
+| LowCut | steady |
+| Pan | blinking |
+
+Any knob push button moves to the next function. Channel `<` and `>` step back
+and forward one at a time.
+
+### What Cycle unlocks
+
+Cycle is a transport button on the MixPre, and it doubles as the switch that
+frees the assignable shortcuts. With Cycle on, Read runs Tone and Mixer runs L/R
+mute. Those are the two the recorder only accepts in that mode. Write (Slate) is
+momentary, so it works at any time: the bridge pulses Cycle around the click and
+puts the mode back exactly as it was.
+
+The same mode guards the Mute row. A channel can only be muted while Cycle is on,
+so a knock against the Mute buttons cannot kill an ISO track mid take, while
+unmuting always works and a muted channel can always be rescued. The Mute LEDs
+follow what the recorder reports.
+
+One more gate: for the first five seconds after the surface appears, the faders
+are ignored. The surface runs its own calibration in that window and would
+otherwise drag the whole mix to zero.
+
+### Pairing faders
+
+The bridge can tie two or more faders together, so moving one moves all of them.
+This is a bridge feature. The MixPre is never told that a group exists.
+
+1. Cycle **off**.
+2. Hold **Mixer** and press **knob 1 to 4** to pick one of the four groups.
+   The Select LEDs go dark, so it is clear that assigning has started.
+3. Still holding Mixer, press **Select** on the channels for that group. The
+   Select LEDs show the group as it is built. Pressing one again takes it out.
+4. Release Mixer. A group needs at least two channels. Anything smaller is
+   dropped, so a half finished gesture leaves nothing behind.
+
+To take a channel out of a finished group, repeat the same gesture on it. If the
+group drops below two channels it disappears. Four groups are available, so two
+stereo pairs can coexist.
+
+Groups live in memory only. They are gone after the power is cut.
+
+While Mixer is held, the Select buttons belong to the bridge and nothing reaches
+the recorder, whose screen would otherwise jump to another channel on every
+click. The knob buttons do not change the scene either, which is the whole reason
+for grabbing the Mixer first.
+
+**Do not run this together with the channel linking in the MixPre menu. Use one
+or the other.** Both tie channels together, and using them on the same pair hands
+one fader two rules. The difference is worth knowing when you pick:
+
+| | MixPre channel linking | Bridge pairing |
+|---|---|---|
+| Trim, LowCut, Pan | shared | not shared |
+| Fader | shared | shared |
+| Motorized faders | do not follow | follow |
+
+The MixPre's own linking shares more, but the surface faders stop tracking it.
+The bridge pairing only ties the faders, and the motors follow them.
 
 ## Repository layout
 

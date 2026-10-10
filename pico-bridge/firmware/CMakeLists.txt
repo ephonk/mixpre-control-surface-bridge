@@ -7,6 +7,10 @@ project(mixpre_bridge C CXX ASM)
 # file on disk always says which build it is.
 file(STRINGS ${CMAKE_CURRENT_LIST_DIR}/version.h FW_VERSION_LINE REGEX "#define FW_VERSION ")
 string(REGEX REPLACE ".*\"([^\"]+)\".*" "\\1" FW_VERSION "${FW_VERSION_LINE}")
+
+# Without this, CMake reads version.h only when it configures, so bumping the
+# version and rebuilding produced an .uf2 still named after the old version.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/version.h)
 pico_sdk_init()
 
 # Pico-PIO-USB library (low-level PIO USB, used as host controller via TinyUSB)
