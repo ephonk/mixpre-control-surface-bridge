@@ -9,7 +9,7 @@ translates between the two protocols.
 Firmware version 1.2.2. What changed between versions is in `CHANGELOG.md`, and
 any build can be asked which version it is: send `F0 7D 61 F7` to the bridge.
 
-![The bridge in its case](images/case-closed.png)
+![A MixPre-10 and an iCON Platform M+ running the bridge on a night shoot](images/mixpre10-icon-bridge-on-set.png)
 
 ---
 
@@ -70,6 +70,8 @@ call, not something a bridge can work around.
 | 4 x M2 x 3 mm screw, 3.5 mm head | Holds the Pico in the case |
 | 2 x M2 x 10 mm screw | Cable clamp |
 | 2 x M3 x 12 mm screw | Lid |
+
+![The finished case](images/case-closed.png)
 
 The Pico has one USB controller, so the native USB port is the MixPre side and
 the host side runs over PIO USB on two GPIO pins.
