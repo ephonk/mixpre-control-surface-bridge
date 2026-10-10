@@ -9,7 +9,7 @@ translates between the two protocols.
 Firmware version 1.2.2. What changed between versions is in `CHANGELOG.md`, and
 any build can be asked which version it is: send `F0 7D 61 F7` to the bridge.
 
-![A MixPre-10 and an iCON Platform M+ running the bridge on a night shoot](images/mixpre10-icon-bridge-on-set.png)
+![A MixPre-10 and an iCON Platform M+ running the bridge on a night shoot](images/mixpre10-icon-bridge-on-set.jpg)
 
 ---
 
