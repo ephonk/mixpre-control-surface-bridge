@@ -9,7 +9,7 @@ translates between the two protocols.
 Firmware version 1.2.2. What changed between versions is in `CHANGELOG.md`, and
 any build can be asked which version it is: send `F0 7D 61 F7` to the bridge.
 
-![The bridge in its case](render/case-closed.png)
+![The bridge in its case](images/case-closed.png)
 
 ---
 
@@ -145,7 +145,7 @@ Work through it in this order.
 10. Power it up with nothing connected on the surface side. The LED blinks until
     the surface answers, and then it stays on.
 
-![Inside the case](render/case-open-top.png)
+![Inside the case](images/case-open-top.png)
 
 The wiring in that picture is illustrative. Solder by the table and the diagram
 above, not by the colours you see there.
@@ -312,7 +312,7 @@ pico-bridge/firmware/     firmware sources
 pico-bridge/docs/         protocol notes
 pico-bridge/README.md     detailed engineering notes
 enclosure/                case parts, STL
-render/                   case renders
+images/                   pictures of the finished case
 docs/                     wiring diagram
 prebuilt/                 ready to flash mixpre_bridge_<version>.uf2
 ```
