@@ -282,8 +282,8 @@ This is a bridge feature. The MixPre is never told that a group exists.
    dropped, so a half finished gesture leaves nothing behind.
 
 To take a channel out of a finished group, repeat the same gesture on it. If the
-group drops below two channels it disappears. Four groups are available, so two
-stereo pairs can coexist.
+group drops below two channels it disappears. Four groups are available, which is
+four stereo pairs on the eight faders.
 
 Groups live in memory only. They are gone after the power is cut.
 
