@@ -369,8 +369,10 @@ Mackie mode. See Controller mode above.
 **Levels drop to silence the moment the surface connects.** This is the MixPre
 protecting your ears, not a fault in the bridge. Whenever the controller mode
 changes, the MixPre sets the channel faders to minimum, so a controller left at
-full cannot blast the mix. Set the faders where you want the levels before you
-connect.
+full cannot blast the mix. Move the fader you need after connecting and the
+recorder takes that position. Setting the faders before you connect does not
+help: the levels drop on connection anyway, and a fader that never moves never
+sends its value.
 
 **A fader moves and the level jumps straight away, with no catch-up.** That is
 how the MixPre treats the faders of a nanoKONTROL Studio. The knobs catch up,
