@@ -63,8 +63,8 @@ cmake -B build -G "Unix Makefiles"
 cmake --build build
 ```
 
-Result: `build/mixpre_bridge.uf2`. Hold BOOTSEL, plug the Pico in, copy the file
-to the RP2350 drive.
+Result: `build/mixpre_bridge_<version>.uf2`, where the version comes from
+`version.h`. Hold BOOTSEL, plug the Pico in, copy the file to the RP2350 drive.
 
 `pico-sdk` and `Pico-PIO-USB` are vendored but not committed. Clone them into
 `pico-bridge/` first.

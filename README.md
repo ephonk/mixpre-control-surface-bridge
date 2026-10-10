@@ -313,7 +313,7 @@ pico-bridge/README.md     detailed engineering notes
 enclosure/                case parts, STL
 render/                   case renders
 docs/                     wiring diagram
-prebuilt/                 ready to flash mixpre_bridge.uf2
+prebuilt/                 ready to flash mixpre_bridge_<version>.uf2
 ```
 
 ## How it works
