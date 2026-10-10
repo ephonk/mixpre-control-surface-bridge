@@ -147,7 +147,17 @@ Work through it in this order.
 
 ![Inside the case](images/case-open-top.png)
 
-The wiring in that picture is illustrative. Solder by the table and the diagram
+Two more views. The first is the step that is easiest to get wrong, the cable
+clamp and the pull relief it gives the solder joints:
+
+![The cable clamp holding the cable](images/case-cable-clamp.png)
+
+The second shows the finished case from the side, with the cable leaving through
+the clamp:
+
+![The finished case from the side](images/case-side-profile.png)
+
+The wiring in these pictures is illustrative. Solder by the table and the diagram
 above, not by the colours you see there.
 
 ## Build
