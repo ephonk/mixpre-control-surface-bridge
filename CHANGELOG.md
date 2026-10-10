@@ -20,5 +20,5 @@ builds and were never published.
 - Status LED on GP2: steady when the surface is talking, blinking when it is not.
 - Keeps the controller configuration in flash, including the three scenes that the
   MixPre writes.
-- Built and tested with the iCON Platform M+, on MixPre-6 and MixPre-10, and run
-  for a full 12 hour day on a shoot without a fault.
+- Built and tested with the iCON Platform M+ on MixPre-6 and MixPre-10, and used
+  over many days on a film production.

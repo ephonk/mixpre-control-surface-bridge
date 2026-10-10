@@ -33,7 +33,8 @@ fixes that with about 10 USD of parts.
 - Slate, Tone and L/R mute
 - Fader pairing: up to four groups, so two or more faders move as one
 - LEDs on the surface follow the recorder
-- Built and tested with the iCON Platform M+ on MixPre-6 and MixPre-10, and run for a full 12 hour day on a shoot without a fault
+- Built and tested with the iCON Platform M+ on MixPre-6 and MixPre-10, and used
+  over many days on a film production
 
 ## What it does not do
 
