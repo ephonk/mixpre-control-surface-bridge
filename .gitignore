@@ -31,3 +31,7 @@ pico_3d/3mmLED v2.step
 # Raspberry Pi Pico 3D model (download from raspberrypi.com, not redistributed)
 pico_3d/
 enclosure/*.step
+
+# Klucze API do generatora lektora. Nigdy nie moga trafic do repozytorium
+# ani do kopii publikacyjnej.
+promo/cert/

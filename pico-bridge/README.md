@@ -98,7 +98,7 @@ Two facts that took measuring rather than guessing:
 
 ## Target protocol: Korg nanoKONTROL Studio, Native Mode
 
-The MixPre accepts a short list of controllers (Akai MIDIMix, Korg nanoKONTROL 2,
+The MixPre works with only a few controllers (Akai MIDIMix, Korg nanoKONTROL 2,
 Korg nanoKONTROL Studio, Novation LaunchControl XL) and nothing else, so the
 bridge has to reproduce one of them exactly.
 

@@ -15,7 +15,7 @@ any build can be asked which version it is: send `F0 7D 61 F7` to the bridge.
 
 ## The problem
 
-A MixPre accepts a short list of controllers: the Akai MIDIMix, the Korg
+A MixPre works with only a few controllers: the Akai MIDIMix, the Korg
 nanoKONTROL 2, the Korg nanoKONTROL Studio and the Novation LaunchControl XL.
 Anything else is ignored, no matter how standard the protocol is.
 
