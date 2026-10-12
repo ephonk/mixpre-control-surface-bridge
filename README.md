@@ -11,6 +11,12 @@ any build can be asked which version it is: send `F0 7D 61 F7` to the bridge.
 
 ![A MixPre-10 and an iCON Platform M+ running the bridge on a night shoot](images/mixpre10-icon-bridge-on-set.jpg)
 
+[![iCON Platform M+ on a Sound Devices MixPre: the Pico 2 bridge](https://img.youtube.com/vi/OmGDivMTtQQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=OmGDivMTtQQ)
+
+Watch the walkthrough, four and a half minutes: plugging it in, the faders, the
+knobs, the shortcut buttons and pairing faders. Chapter times are in the
+description.
+
 ---
 
 ## The problem
