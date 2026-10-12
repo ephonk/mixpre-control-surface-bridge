@@ -408,7 +408,7 @@ mixer, building open source tools for the sound community.
 
 ## Not affiliated
 
-Not affiliated with, endorsed by or supported by Sound Devices or Korg.
+Not affiliated with, endorsed by or supported by Sound Devices, Korg or iCON.
 Product names are used only to describe what the hardware interoperates with.
 
 The case is designed around the Raspberry Pi Pico 2. Grab its 3D model from the
