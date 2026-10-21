@@ -53,9 +53,12 @@ Three things, for three different reasons:
   a knob by turning it until it catches the value the recorder already has.
 - **Channels 9 and 10 of a MixPre-10 are out of reach.** The eight faders reach
   channels 1 to 8. A MixPre-6 has six channels, so all of them are covered. A
-  MixPre-10 has ten, and the last two are not: a fader that lands on a channel it
-  does not already match would jump the level, and the MixPre does no catch-up on
-  its faders. The bridge could do that catch-up itself, and a later release may.
+  MixPre-10 has ten, and the last two cannot be reached at all: when the recorder
+  writes its controller scene it defines exactly eight strips, every one of them
+  on MIDI channel 1, and no supported controller profile has a bank switch. This
+  was measured, not assumed: every CC from 0 to 127 and every note from 0 to 127
+  was sent to the recorder, and nothing arrived at channels 9 or 10. It is a
+  limit of the recorder, not of the bridge.
 
 Everything else depends on Sound Devices. Official support for controllers other
 than the one they whitelist, and value feedback for faders and knobs, are their

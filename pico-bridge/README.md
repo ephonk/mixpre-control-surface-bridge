@@ -152,7 +152,7 @@ Mode change: set it with the iCON software or at start-up, see the iCON manual.
 | Notes 75 and 76 | Marker Set, Next Marker |
 | CC 60 | jog wheel, same Sign Magnitude value |
 | Notes 32 to 39, 48, 49 | switch the knob function, not forwarded |
-| Notes 46 and 47 | deliberately unhandled, reserved for a channel bank jump (measured: Bank `<` and Bank `>`) |
+| Notes 46 and 47 | deliberately unhandled, no LED the host can light. A channel bank jump is not possible: the MixPre's controller scene defines eight strips and no supported profile has a bank switch |
 | Notes 74 / 75 / 84 | Read / Write / Mixer, see the shortcuts below |
 
 ### MixPre to surface
